@@ -1,9 +1,16 @@
 // ---------------- MAP SETUP ----------------
-let map = L.map("map").setView([28.6139, 77.2090], 12);
+let map = L.map("map", {
+  zoomControl: false
+}).setView([28.6139, 77.2090], 12);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap contributors",
 }).addTo(map);
+
+L.control.zoom({
+  position: "topright"
+}).addTo(map);
+
 
 let routeLayer = null;
 let storedRoutes = {};
