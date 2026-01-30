@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Traffic Path Optimizer</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <!-- Your CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <h1>🚦 Traffic Path Optimizer</h1>
+
+  <div class="controls">
+    <input id="source" type="text" placeholder="Enter source place">
+    <input id="destination" type="text" placeholder="Enter destination place">
+    <button onclick="findPlaces()">Find Route</button>
+  </div>
+
+  <!-- Transport Mode Buttons -->
+<div class="modes">
+  <button onclick="setMode('Car')">🚗 Car</button>
+  <button onclick="setMode('Cycling')">🚴 Cycling</button>
+  <button onclick="setMode('Walking')">🚶 Walking</button>
+</div>
+
+  <div id="info"></div>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Your JS -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
