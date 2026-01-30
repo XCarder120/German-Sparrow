@@ -101,15 +101,19 @@ body {
 /* Google Maps–style suggestions */
 .suggestions {
   position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+
   background: white;
-  width: 100%;
   border-radius: 6px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-  margin-top: 4px;
+
+  max-height: 220px;       /* 👈 KEY FIX */
+  overflow-y: auto;        /* 👈 SCROLL INSIDE */
   z-index: 2000;
-  max-height: 260px;
-  overflow-y: auto;
-  display: none;
+
+  margin-top: 4px;
 }
 
 .suggestions div {
