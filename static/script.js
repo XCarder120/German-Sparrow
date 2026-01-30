@@ -17,49 +17,48 @@ let storedRoutes = {};
 let coordinates = null;
 
 // ---------------- AUTOCOMPLETE ----------------
-async function getSuggestions(query) {
+async function fetchSuggestions(query) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5`;
   const res = await fetch(url);
   return await res.json();
 }
 
-function attachAutocomplete(inputId) {
+function setupAutocomplete(inputId) {
   const input = document.getElementById(inputId);
-
   const box = document.createElement("div");
   box.className = "suggestions";
   input.parentNode.appendChild(box);
 
-  let timeout;
+  let debounceTimer;
 
   input.addEventListener("input", () => {
-    clearTimeout(timeout);
+    clearTimeout(debounceTimer);
 
-    timeout = setTimeout(async () => {
+    debounceTimer = setTimeout(async () => {
       const q = input.value.trim();
       if (q.length < 3) {
         box.style.display = "none";
         return;
       }
 
-      const results = await getSuggestions(q);
+      const results = await fetchSuggestions(q);
       box.innerHTML = "";
       box.style.display = "block";
 
       results.forEach(place => {
-        const div = document.createElement("div");
-        div.innerText = place.display_name;
+        const item = document.createElement("div");
+        item.innerText = place.display_name;
 
-        div.onclick = () => {
+        item.onclick = () => {
           input.value = place.display_name;
           input.dataset.lat = place.lat;
           input.dataset.lon = place.lon;
           box.style.display = "none";
         };
 
-        box.appendChild(div);
+        box.appendChild(item);
       });
-    }, 300);
+    }, 300); // debounce (important!)
   });
 
   document.addEventListener("click", e => {
@@ -69,24 +68,35 @@ function attachAutocomplete(inputId) {
   });
 }
 
-// Attach autocomplete
-attachAutocomplete("source");
-attachAutocomplete("destination");
+// Attach to inputs
+setupAutocomplete("source");
+setupAutocomplete("destination");
+
 
 // ---------------- FIND ROUTE ----------------
 async function findPlaces() {
-  const srcInput = document.getElementById("source");
-  const destInput = document.getElementById("destination");
+  const sourceInput = document.getElementById("source");
+  const destinationInput = document.getElementById("destination");
 
-  if (!srcInput.dataset.lat || !destInput.dataset.lat) {
+  // ✅ Ensure user selected from suggestions
+  if (!sourceInput.dataset.lat || !destinationInput.dataset.lat) {
     alert("Please select locations from suggestions");
     return;
   }
 
-  coordinates = [
-    [parseFloat(srcInput.dataset.lon), parseFloat(srcInput.dataset.lat)],
-    [parseFloat(destInput.dataset.lon), parseFloat(destInput.dataset.lat)]
+  // ✅ ADD THESE CONSTANTS HERE
+  const src = [
+    parseFloat(sourceInput.dataset.lon),
+    parseFloat(sourceInput.dataset.lat)
   ];
+
+  const dest = [
+    parseFloat(destinationInput.dataset.lon),
+    parseFloat(destinationInput.dataset.lat)
+  ];
+
+  // ✅ Coordinates format expected by your Flask API
+  const coordinates = [src, dest];
 
   try {
     const response = await fetch("/route", {
@@ -96,11 +106,13 @@ async function findPlaces() {
     });
 
     storedRoutes = await response.json();
+
+    // Default mode
     setMode("Car");
 
   } catch (err) {
-    alert("Failed to fetch route");
     console.error(err);
+    alert("Failed to fetch route");
   }
 }
 
