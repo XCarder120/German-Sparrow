@@ -116,6 +116,39 @@ async function findPlaces() {
   }
 }
 
+async function useMyLocation() {
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported by your browser");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async position => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      // Save coordinates for routing
+      const sourceInput = document.getElementById("source");
+      sourceInput.dataset.lat = lat;
+      sourceInput.dataset.lon = lon;
+
+      // Center map like Google Maps
+      map.setView([lat, lon], 14);
+      L.marker([lat, lon]).addTo(map).bindPopup("You are here").openPopup();
+
+      // Reverse geocode to get place name
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      sourceInput.value = data.display_name || "My Location";
+    },
+    error => {
+      alert("Location permission denied");
+    }
+  );
+}
+
 // ---------------- DRAW ROUTE ----------------
 function drawRoute(modeName) {
   const data = storedRoutes[modeName];
