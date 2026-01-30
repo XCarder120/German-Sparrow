@@ -5,44 +5,83 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap contributors",
 }).addTo(map);
 
-let routeLayer = null;       // Current displayed route
-let storedRoutes = {};       // Stores GeoJSON + summary for all modes
-let coordinates = null;      // Current source/destination coordinates
+let routeLayer = null;
+let storedRoutes = {};
+let coordinates = null;
 
-// ---------------- GEOCODING ----------------
-async function geocode(place) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${place}`;
+// ---------------- AUTOCOMPLETE ----------------
+async function getSuggestions(query) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5`;
   const res = await fetch(url);
-  const data = await res.json();
-
-  if (!data || data.length === 0) throw new Error("Place not found: " + place);
-
-  return {
-    lat: parseFloat(data[0].lat),
-    lon: parseFloat(data[0].lon)
-  };
+  return await res.json();
 }
 
-// ---------------- FIND PLACES ----------------
-async function findPlaces() {
-  const source = document.getElementById("source").value.trim();
-  const destination = document.getElementById("destination").value.trim();
+function attachAutocomplete(inputId) {
+  const input = document.getElementById(inputId);
 
-  if (!source || !destination) {
-    alert("Please enter both source and destination");
+  const box = document.createElement("div");
+  box.className = "suggestions";
+  input.parentNode.appendChild(box);
+
+  let timeout;
+
+  input.addEventListener("input", () => {
+    clearTimeout(timeout);
+
+    timeout = setTimeout(async () => {
+      const q = input.value.trim();
+      if (q.length < 3) {
+        box.style.display = "none";
+        return;
+      }
+
+      const results = await getSuggestions(q);
+      box.innerHTML = "";
+      box.style.display = "block";
+
+      results.forEach(place => {
+        const div = document.createElement("div");
+        div.innerText = place.display_name;
+
+        div.onclick = () => {
+          input.value = place.display_name;
+          input.dataset.lat = place.lat;
+          input.dataset.lon = place.lon;
+          box.style.display = "none";
+        };
+
+        box.appendChild(div);
+      });
+    }, 300);
+  });
+
+  document.addEventListener("click", e => {
+    if (!box.contains(e.target) && e.target !== input) {
+      box.style.display = "none";
+    }
+  });
+}
+
+// Attach autocomplete
+attachAutocomplete("source");
+attachAutocomplete("destination");
+
+// ---------------- FIND ROUTE ----------------
+async function findPlaces() {
+  const srcInput = document.getElementById("source");
+  const destInput = document.getElementById("destination");
+
+  if (!srcInput.dataset.lat || !destInput.dataset.lat) {
+    alert("Please select locations from suggestions");
     return;
   }
 
+  coordinates = [
+    [parseFloat(srcInput.dataset.lon), parseFloat(srcInput.dataset.lat)],
+    [parseFloat(destInput.dataset.lon), parseFloat(destInput.dataset.lat)]
+  ];
+
   try {
-    const src = await geocode(source);
-    const dest = await geocode(destination);
-
-    coordinates = [
-      [src.lon, src.lat],
-      [dest.lon, dest.lat]
-    ];
-
-    // Fetch all modes once
     const response = await fetch("/route", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -50,44 +89,44 @@ async function findPlaces() {
     });
 
     storedRoutes = await response.json();
-
-    // Draw default mode: Car
-    drawRoute("Car");
+    setMode("Car");
 
   } catch (err) {
+    alert("Failed to fetch route");
     console.error(err);
-    alert(err.message);
   }
 }
 
 // ---------------- DRAW ROUTE ----------------
 function drawRoute(modeName) {
-  if (!storedRoutes[modeName]) {
-    console.log("No data for mode:", modeName, storedRoutes);
-    alert("Route data not available for " + modeName);
-    return;
-  }
-
   const data = storedRoutes[modeName];
+  if (!data || data.error) return;
 
-  // Remove old route if exists
-  if (routeLayer) {
-    map.removeLayer(routeLayer);
-  }
+  if (routeLayer) map.removeLayer(routeLayer);
 
-  // Draw new route
-  routeLayer = L.geoJSON(data.geojson).addTo(map);
+  routeLayer = L.geoJSON(data.geojson, {
+    style: { weight: 5 }
+  }).addTo(map);
+
   map.fitBounds(routeLayer.getBounds());
 
-  // Update info box
   document.getElementById("info").innerHTML = `
-    <b>Mode:</b> ${modeName}<br>
-    🛣 Distance: ${data.distance_km} km<br>
-    ⏱ Estimated Time: ${data.time_min} minutes
+    <b>${modeName}</b><br>
+    🛣 ${data.distance_km} km<br>
+    ⏱ ${data.time_min} min
   `;
 }
 
 // ---------------- MODE BUTTONS ----------------
 function setMode(modeName) {
+  document.querySelectorAll(".modes button").forEach(btn =>
+    btn.classList.remove("active")
+  );
+
+  const btn = [...document.querySelectorAll(".modes button")]
+    .find(b => b.innerText.includes(modeName[0]));
+
+  if (btn) btn.classList.add("active");
+
   drawRoute(modeName);
 }
