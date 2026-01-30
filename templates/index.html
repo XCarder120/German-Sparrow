@@ -15,22 +15,30 @@
 </head>
 <body>
 
-  <h1>🚦 Traffic Path Optimizer</h1>
+  <!-- GOOGLE MAPS STYLE SEARCH PANEL -->
+  <div class="search-panel">
+    <div class="search-header">
+      🚦 Traffic Path Optimizer
+    </div>
 
-  <div class="controls">
-    <input id="source" type="text" placeholder="Enter source place">
-    <input id="destination" type="text" placeholder="Enter destination place">
-    <button onclick="findPlaces()">Find Route</button>
+    <div class="search-inputs">
+      <input id="source" type="text" placeholder="Choose starting point">
+      <input id="destination" type="text" placeholder="Choose destination">
+    </div>
+
+    <button class="route-btn" onclick="findPlaces()">Find Route</button>
+
+    <!-- Transport Mode Buttons -->
+    <div class="modes">
+      <button onclick="setMode('Car')">🚗</button>
+      <button onclick="setMode('Cycling')">🚴</button>
+      <button onclick="setMode('Walking')">🚶</button>
+    </div>
+
+    <div id="info"></div>
   </div>
 
-  <!-- Transport Mode Buttons -->
-<div class="modes">
-  <button onclick="setMode('Car')">🚗 Car</button>
-  <button onclick="setMode('Cycling')">🚴 Cycling</button>
-  <button onclick="setMode('Walking')">🚶 Walking</button>
-</div>
-
-  <div id="info"></div>
+  <!-- MAP -->
   <div id="map"></div>
 
   <!-- Leaflet JS -->
