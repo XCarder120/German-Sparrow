@@ -121,10 +121,9 @@ body {
   cursor: pointer;
   font-size: 14px;
 }
-.location-input {
+.location-input,
+.search-inputs {
   position: relative;
-  display: flex;
-  align-items: center;
 }
 
 .loc-btn {
