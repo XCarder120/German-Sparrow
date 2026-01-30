@@ -116,35 +116,36 @@ async function findPlaces() {
   }
 }
 
-async function useMyLocation() {
+function useMyLocation() {
+  console.log("Location button clicked");
+
   if (!navigator.geolocation) {
-    alert("Geolocation is not supported by your browser");
+    alert("Geolocation not supported by this browser");
     return;
   }
 
   navigator.geolocation.getCurrentPosition(
-    async position => {
+    position => {
+      console.log("Permission granted");
+
       const lat = position.coords.latitude;
       const lon = position.coords.longitude;
 
-      // Save coordinates for routing
       const sourceInput = document.getElementById("source");
       sourceInput.dataset.lat = lat;
       sourceInput.dataset.lon = lon;
 
-      // Center map like Google Maps
       map.setView([lat, lon], 14);
       L.marker([lat, lon]).addTo(map).bindPopup("You are here").openPopup();
 
-      // Reverse geocode to get place name
-      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
-      const res = await fetch(url);
-      const data = await res.json();
-
-      sourceInput.value = data.display_name || "My Location";
+      sourceInput.value = "My Location";
     },
     error => {
-      alert("Location permission denied");
+      console.error("Geolocation error:", error);
+
+      if (error.code === 1) alert("Location permission denied");
+      if (error.code === 2) alert("Position unavailable");
+      if (error.code === 3) alert("Location request timed out");
     }
   );
 }
