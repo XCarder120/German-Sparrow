@@ -252,3 +252,9 @@ function endTour() {
   document.getElementById("tour-tooltip").style.display = "none";
   localStorage.setItem("tourDone", "yes");
 }
+window.addEventListener("load", () => {
+  if (!localStorage.getItem("tourDone")) {
+    setTimeout(startTour, 800);
+  }
+});
+
