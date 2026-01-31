@@ -53,5 +53,16 @@
   <!-- Your JS -->
   <script src="{{ url_for('static', filename='script.js') }}"></script>
 
+  <!-- Onboarding Tooltip -->
+<div id="tour-overlay"></div>
+
+<div id="tour-tooltip">
+  <div id="tour-text"></div>
+  <div class="tour-actions">
+    <button onclick="nextStep()">Next</button>
+    <button onclick="endTour()">Skip</button>
+  </div>
+</div>
+
 </body>
 </html>
