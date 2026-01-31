@@ -17,10 +17,27 @@ let storedRoutes = {};
 let coordinates = null;
 
 // ---------------- AUTOCOMPLETE ----------------
-async function fetchSuggestions(query) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5`;
+// ---------------- PHOTON AUTOCOMPLETE ----------------
+async function fetchPhotonSuggestions(query, lat = null, lon = null) {
+  let url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=6`;
+
+  // Bias results to user's location (if available)
+  if (lat && lon) {
+    url += `&lat=${lat}&lon=${lon}`;
+  }
+
   const res = await fetch(url);
-  return await res.json();
+  const data = await res.json();
+  return data.features || [];
+}
+
+function formatPhotonPlace(feature) {
+  const p = feature.properties;
+  return [
+    p.name,
+    p.city || p.town || p.village || "",
+    p.state || ""
+  ].filter(Boolean).join(", ");
 }
 
 function setupAutocomplete(inputId) {
@@ -35,30 +52,36 @@ function setupAutocomplete(inputId) {
     clearTimeout(debounceTimer);
 
     debounceTimer = setTimeout(async () => {
-      const q = input.value.trim();
-      if (q.length < 3) {
+      const query = input.value.trim();
+      if (query.length < 3) {
         box.style.display = "none";
         return;
       }
 
-      const results = await fetchSuggestions(q);
+      // Use stored location to bias results (if available)
+      const lat = input.dataset.lat || null;
+      const lon = input.dataset.lon || null;
+
+      const results = await fetchPhotonSuggestions(query, lat, lon);
+
       box.innerHTML = "";
       box.style.display = "block";
 
-      results.forEach(place => {
-        const item = document.createElement("div");
-        item.innerText = place.display_name;
+      results.forEach(feature => {
+        const div = document.createElement("div");
+        div.innerText = formatPhotonPlace(feature);
 
-        item.onclick = () => {
-          input.value = place.display_name;
-          input.dataset.lat = place.lat;
-          input.dataset.lon = place.lon;
+        div.onclick = () => {
+          const coords = feature.geometry.coordinates;
+          input.value = div.innerText;
+          input.dataset.lon = coords[0];
+          input.dataset.lat = coords[1];
           box.style.display = "none";
         };
 
-        box.appendChild(item);
+        box.appendChild(div);
       });
-    }, 300); // debounce (important!)
+    }, 450); // Slightly slower debounce = more stable
   });
 
   document.addEventListener("click", e => {
