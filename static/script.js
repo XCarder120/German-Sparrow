@@ -183,3 +183,72 @@ function setMode(modeName) {
 
   drawRoute(modeName);
 }
+
+const tourSteps = [
+  {
+    element: "#source",
+    text: "Start by choosing your starting point. Type and select a place from suggestions."
+  },
+  {
+    element: ".loc-btn",
+    text: "Click here to use your current location as the starting point."
+  },
+  {
+    element: "#destination",
+    text: "Now choose your destination from the suggestions."
+  },
+  {
+    element: ".route-btn",
+    text: "Click here to calculate the best route."
+  },
+  {
+    element: ".modes",
+    text: "Switch between Car, Cycling, and Walking routes."
+  },
+  {
+    element: "#map",
+    text: "This map shows your route. Zoom and drag to explore."
+  }
+];
+
+let currentStep = 0;
+
+function startTour() {
+  document.getElementById("tour-overlay").style.display = "block";
+  document.getElementById("tour-tooltip").style.display = "block";
+  showStep();
+}
+
+function showStep() {
+  const step = tourSteps[currentStep];
+  const el = document.querySelector(step.element);
+
+  if (!el) return;
+
+  const rect = el.getBoundingClientRect();
+  const tooltip = document.getElementById("tour-tooltip");
+  const text = document.getElementById("tour-text");
+
+  text.innerText = step.text;
+
+  tooltip.style.top = rect.bottom + window.scrollY + 10 + "px";
+  tooltip.style.left = rect.left + window.scrollX + "px";
+  tooltip.className = "tooltip-bottom";
+
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function nextStep() {
+  currentStep++;
+  if (currentStep >= tourSteps.length) {
+    endTour();
+  } else {
+    showStep();
+  }
+}
+
+function endTour() {
+  document.getElementById("tour-overlay").style.display = "none";
+  document.getElementById("tour-tooltip").style.display = "none";
+  localStorage.setItem("tourDone", "yes");
+}
