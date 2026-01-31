@@ -33,10 +33,14 @@ async function fetchPhotonSuggestions(query, lat = null, lon = null) {
 
 function formatPhotonPlace(feature) {
   const p = feature.properties;
+
   return [
     p.name,
-    p.city || p.town || p.village || "",
-    p.state || ""
+    p.housenumber && p.street ? `${p.housenumber} ${p.street}` : p.street,
+    p.suburb,
+    p.city || p.town || p.village,
+    p.state,
+    p.country
   ].filter(Boolean).join(", ");
 }
 
